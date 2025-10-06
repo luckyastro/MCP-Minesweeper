@@ -6,7 +6,10 @@
 - Implemented FastAPI server for remote tool access
 - Created HTTP client for remote server interaction
 - Implemented proxy tool for remote server integration
-- Added unit tests for core functionality and proxy tool
+- Added WebSocket support for streaming interactions
+- Created tool chaining example for combining local and remote tools
+- Added unit tests for core functionality, proxy tool, and WebSocket streaming
+- Implemented tool result caching for improved performance
 
 ## Completed Tasks
 - [x] Project directory structure created (2024-05-22)
@@ -28,14 +31,15 @@
 - [x] Phase 3.5: Implement error handling (2024-05-22)
 - [x] Phase 4.1: Create HTTP client (2024-05-22)
 - [x] Phase 4.2: Implement proxy tool for remote servers (2024-05-26)
+- [x] Phase 4.3: Add WebSocket support for streaming (2024-05-26)
+- [x] Phase 4.4: Create tool chaining example (2024-05-26)
+- [x] Phase 4.5: Implement tool result caching (2024-06-06)
 
 ## In Progress
-- [ ] Phase 4.3: Add WebSocket support for streaming
+- [ ] Phase 5.1: Set up AWS Bedrock client
 
 ## Next Up
-- [ ] Phase 4.4: Create tool chaining example
-- [ ] Phase 4.5: Implement tool result caching (optional)
-- [ ] Phase 5: AWS Bedrock Integration
+- [ ] Phase 5.2: Create Claude 3.7 integration adapter
 - [ ] Phase 6: Documentation and Examples
 
 ## Phase 1: Core Protocol Implementation
@@ -62,9 +66,9 @@
 ## Phase 4: Remote Tool Integration
 - [x] 4.1 Create HTTP client for calling remote MCP servers
 - [x] 4.2 Implement proxy tool that forwards requests to remote servers
-- [ ] 4.3 Add WebSocket support for streaming interactions
-- [ ] 4.4 Create example of chaining local and remote tools
-- [ ] 4.5 Implement tool result caching (optional)
+- [x] 4.3 Add WebSocket support for streaming interactions
+- [x] 4.4 Create example of chaining local and remote tools
+- [x] 4.5 Implement tool result caching
 
 ## Phase 5: AWS Bedrock Integration
 - [ ] 5.1 Set up AWS Bedrock client

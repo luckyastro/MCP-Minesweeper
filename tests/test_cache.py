@@ -51,6 +51,47 @@ class TestToolCache(unittest.TestCase):
         # Should be expired now
         self.assertIsNone(cache.get(function_name, parameters))
 
+    def test_cache_invalidation(self):
+        """Test manual invalidation of cache entries."""
+        cache = ToolCache()
+        function_name = "test_function"
+        parameters = {"param": "value"}
+        result = FunctionResponse(result="test_result")
+
+        # Store in cache
+        cache.set(function_name, parameters, result)
+        
+        # Should be in cache
+        self.assertEqual(cache.get(function_name, parameters), result)
+        
+        # Invalidate entry
+        self.assertTrue(cache.invalidate(function_name, parameters))
+        
+        # Should not be in cache anymore
+        self.assertIsNone(cache.get(function_name, parameters))
+        
+        # Invalidating non-existent entry should return False
+        self.assertFalse(cache.invalidate(function_name, parameters))
+
+    def test_cache_clear(self):
+        """Test clearing all cache entries."""
+        cache = ToolCache()
+        
+        # Add multiple entries
+        cache.set("func1", {"param": 1}, FunctionResponse(result="result1"))
+        cache.set("func2", {"param": 2}, FunctionResponse(result="result2"))
+        
+        # Entries should be in cache
+        self.assertIsNotNone(cache.get("func1", {"param": 1}))
+        self.assertIsNotNone(cache.get("func2", {"param": 2}))
+        
+        # Clear cache
+        cache.clear()
+        
+        # Cache should be empty
+        self.assertIsNone(cache.get("func1", {"param": 1}))
+        self.assertIsNone(cache.get("func2", {"param": 2}))
+
     def test_cache_eviction(self):
         """Test that LRU eviction works when cache is full."""
         cache = ToolCache(max_size=2)  # Only 2 entries max
