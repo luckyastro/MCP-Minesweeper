@@ -218,3 +218,41 @@ class AsyncBedrockClient:
             content_type=content_type,
         )
     
+    async def invoke_model_with_response_stream(
+        self,
+        model_id: str,
+        body: Dict[str, Any],
+        accept: str = "application/json",
+        content_type: str = "application/json",
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """
+        Invoke a Bedrock model with streaming response asynchronously.
+        
+        Args:
+            model_id: Bedrock model ID
+            body: Request body
+            accept: Response content type
+            content_type: Request content type
+            
+        Yields:
+            Dict[str, Any]: Streaming chunks of model response
+            
+        Raises:
+            ClientError: If the Bedrock API request fails
+        """
+        import asyncio
+        
+        # Create a generator that will yield chunks from the sync client
+        def stream_generator():
+            return self.sync_client.invoke_model_with_response_stream(
+                model_id=model_id,
+                body=body,
+                accept=accept,
+                content_type=content_type,
+            )
+        
+        # Run the generator in a separate thread and yield chunks
+        stream_gen = await asyncio.to_thread(stream_generator)
+        
+        for chunk in stream_gen:
+            yield chunk 

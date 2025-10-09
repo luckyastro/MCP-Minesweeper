@@ -154,6 +154,34 @@ class TestAsyncBedrockClient:
             
             yield client
     
+    async def test_invoke_model(self, client):
+        """Test invoking a model asynchronously."""
+        # Mock response
+        model_response = {"generated_text": "Hello, world!"}
+        mock_response = {"body": MockResponse(model_response)}
+        client.sync_client.invoke_model = MagicMock(return_value=model_response)
+        
+        # Test parameters
+        model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+        body = {"prompt": "Hello", "max_tokens": 100}
+        
+        # Call method
+        response = await client.invoke_model(
+            model_id=model_id,
+            body=body,
+        )
+        
+        # Check call parameters
+        client.sync_client.invoke_model.assert_called_once_with(
+            model_id=model_id,
+            body=body,
+            accept="application/json",
+            content_type="application/json",
+        )
+        
+        # Check response
+        assert response == model_response
+    
     async def test_invoke_model_with_response_stream(self, client):
         """Test invoking a model with streaming response asynchronously."""
         # Mock response chunks
