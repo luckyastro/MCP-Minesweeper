@@ -95,6 +95,14 @@ class TestClaudeAdapter(unittest.TestCase):
         self.assertEqual(len(body["messages"]), 1)
         self.assertNotIn("tools", body)
     
+    def test_prepare_request_body_with_functions(self):
+        """Test preparing request body with functions."""
+        body = self.adapter._prepare_request_body(self.messages, self.functions)
+        
+        self.assertIn("tools", body)
+        self.assertEqual(len(body["tools"]), 1)
+        self.assertEqual(body["tool_choice"], "auto")
+    
     def test_parse_function_calls(self):
         """Test parsing function calls from response content."""
         content = [
@@ -204,6 +212,71 @@ class TestClaudeAdapter(unittest.TestCase):
         self.assertFalse(result_chunks[1].is_final)
         self.assertTrue(result_chunks[2].is_final)
         self.assertEqual(result_chunks[0].status, "success")
+    
+    def test_generate_with_streaming_content_accumulation(self):
+        """Test content accumulation in streaming responses for synchronous adapter."""
+        # Mock streaming chunks with content across multiple chunks
+        chunks = [
+            {
+                "id": "chunk_01",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "I'll help you "},
+                "content": "I'll help you ",
+                "usage": {},
+            },
+            {
+                "id": "chunk_02",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "check the weather."},
+                "content": "check the weather.",
+                "usage": {},
+            },
+            {
+                "id": "chunk_03",
+                "type": "content_block_start",
+                "content_block": {
+                    "type": "tool_use",
+                    "tool_use": {
+                        "name": "get_weather",
+                        "parameters": {
+                            "location": "London",
+                            "unit": "celsius"
+                        }
+                    }
+                },
+                "content": "",
+                "usage": {},
+            },
+            {
+                "id": "chunk_04",
+                "type": "message_stop",
+                "delta": {},
+                "content": "",
+                "usage": {"input_tokens": 10, "output_tokens": 20},
+            },
+        ]
+        
+        # Set up mock return value
+        self.mock_bedrock_client.invoke_model_with_response_stream.return_value = chunks
+        
+        result_chunks = list(self.adapter.generate_with_streaming(self.messages, self.functions))
+        
+        # Check call to bedrock client
+        self.mock_bedrock_client.invoke_model_with_response_stream.assert_called_once()
+        
+        # Check result chunks
+        self.assertEqual(len(result_chunks), 4)
+        self.assertFalse(result_chunks[0].is_final)
+        self.assertFalse(result_chunks[1].is_final)
+        self.assertFalse(result_chunks[2].is_final)
+        self.assertTrue(result_chunks[3].is_final)
+        
+        # Check that the final chunk contains the accumulated content
+        self.assertIn("I'll help you check the weather.", result_chunks[3].content)
+        
+        # Verify all chunks have success status
+        for chunk in result_chunks:
+            self.assertEqual(chunk.status, "success")
     
     def test_extract_function_calls(self):
         """Test extracting function calls from Claude response."""
@@ -342,7 +415,132 @@ class TestAsyncClaudeAdapter:
         
         # Check result
         assert result == response
+    
+    async def test_generate_with_streaming(self, adapter, messages, functions):
+        """Test generating a streaming response using Claude 3.7 asynchronously."""
+        # Mock streaming chunks
+        chunks = [
+            {
+                "id": "chunk_01",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "I'll check "},
+                "content": "I'll check ",
+                "usage": {},
+            },
+            {
+                "id": "chunk_02",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "the weather for you."},
+                "content": "the weather for you.",
+                "usage": {},
+            },
+            {
+                "id": "chunk_03",
+                "type": "message_stop",
+                "delta": {},
+                "content": "",
+                "usage": {"input_tokens": 10, "output_tokens": 15},
+            },
+        ]
         
+        # Create a mock that asynchronously yields chunks
+        async def async_generator():
+            for chunk in chunks:
+                yield chunk
+        
+        adapter._mock_bedrock_client.invoke_model_with_response_stream = MagicMock(
+            return_value=async_generator()
+        )
+        
+        result_chunks = []
+        async for chunk in adapter.generate_with_streaming(messages, functions):
+            result_chunks.append(chunk)
+        
+        # Check call to bedrock client
+        adapter._mock_bedrock_client.invoke_model_with_response_stream.assert_called_once()
+        args, kwargs = adapter._mock_bedrock_client.invoke_model_with_response_stream.call_args
+        assert kwargs["model_id"] == adapter.config.model_id
+        
+        # Check result chunks
+        assert len(result_chunks) == 3
+        assert not result_chunks[0].is_final
+        assert not result_chunks[1].is_final
+        assert result_chunks[2].is_final
+        assert result_chunks[0].status == "success"
+    
+    async def test_generate_with_streaming_content_accumulation(self, adapter, messages, functions):
+        """Test content accumulation in streaming responses."""
+        # Mock streaming chunks with content across multiple chunks
+        chunks = [
+            {
+                "id": "chunk_01",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "I'll help you "},
+                "content": "I'll help you ",
+                "usage": {},
+            },
+            {
+                "id": "chunk_02",
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "check the weather."},
+                "content": "check the weather.",
+                "usage": {},
+            },
+            {
+                "id": "chunk_03",
+                "type": "content_block_start",
+                "content_block": {
+                    "type": "tool_use",
+                    "tool_use": {
+                        "name": "get_weather",
+                        "parameters": {
+                            "location": "London",
+                            "unit": "celsius"
+                        }
+                    }
+                },
+                "content": "",
+                "usage": {},
+            },
+            {
+                "id": "chunk_04",
+                "type": "message_stop",
+                "delta": {},
+                "content": "",
+                "usage": {"input_tokens": 10, "output_tokens": 20},
+            },
+        ]
+        
+        # Create a mock that asynchronously yields chunks
+        async def async_generator():
+            for chunk in chunks:
+                yield chunk
+        
+        adapter._mock_bedrock_client.invoke_model_with_response_stream = MagicMock(
+            return_value=async_generator()
+        )
+        
+        result_chunks = []
+        async for chunk in adapter.generate_with_streaming(messages, functions):
+            result_chunks.append(chunk)
+        
+        # Check call to bedrock client
+        adapter._mock_bedrock_client.invoke_model_with_response_stream.assert_called_once()
+        
+        # Check result chunks
+        assert len(result_chunks) == 4
+        assert not result_chunks[0].is_final
+        assert not result_chunks[1].is_final
+        assert not result_chunks[2].is_final
+        assert result_chunks[3].is_final
+        
+        # Check that the final chunk contains the accumulated content
+        assert "I'll help you check the weather." in result_chunks[3].content
+        
+        # Verify all chunks have success status
+        for chunk in result_chunks:
+            assert chunk.status == "success"
+    
     async def test_extract_function_calls(self, adapter):
         """Test extracting function calls from Claude response."""
         response = {
