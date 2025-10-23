@@ -208,6 +208,49 @@ def get_weather(location: str, units: Optional[str] = "metric") -> Dict[str, Any
     
     return weather_data
 
+
+def weather_handler(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Handler for the weather tool that unpacks parameters from a dict.
+    
+    Args:
+        parameters: Dictionary of parameters
+        
+    Returns:
+        Weather information 
+    """
+    return get_weather(
+        location=parameters["location"],
+        units=parameters.get("units", "metric")
+    )
+
+
+# Define the function schema
+weather_function = FunctionDefinition(
+    name="weather",
+    description="Get current weather for a location",
+    parameters={
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "City name or coordinates",
+            },
+            "units": {
+                "type": "string",
+                "description": "Temperature units",
+                "enum": ["metric", "imperial"],
+                "default": "metric",
+            },
+        },
+        "required": ["location"],
+    },
+)
+
+
+def register() -> None:
+    """Register the weather tool in the global registry."""
+    registry.register(weather_function, weather_handler)
 ```
 
 ## Best Practices
