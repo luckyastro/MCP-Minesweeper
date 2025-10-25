@@ -16,7 +16,6 @@
 - Added documentation for AWS setup
 - Created tutorial for adding new tools
 - Documented server API endpoints
-- Added example scripts for common use cases
 
 ## Completed Tasks
 - [x] Project directory structure created (2024-05-22)
@@ -49,11 +48,11 @@
 - [x] Phase 6.1: Write project README with setup instructions (2024-08-13)
 - [x] Phase 6.2: Create tutorial for adding new tools (2024-08-27)
 - [x] Phase 6.3: Document server API endpoints (2024-09-10)
-- [x] Phase 6.4: Add example scripts for common use cases (2024-09-12)
 
 ## In Progress
 
 ## Next Up
+- [ ] Phase 6.4: Add example scripts for common use cases
 - [ ] Phase 6.5: Include deployment examples for AWS
 
 ## Phase 1: Core Protocol Implementation
@@ -95,5 +94,5 @@
 - [x] 6.1 Write project README with setup instructions
 - [x] 6.2 Create tutorial for adding new tools
 - [x] 6.3 Document server API endpoints
-- [x] 6.4 Add example scripts for common use cases
+- [ ] 6.4 Add example scripts for common use cases
 - [ ] 6.5 Include deployment examples for AWS 
