@@ -201,6 +201,91 @@ def generate_dynamodb_config() -> Dict[str, Any]:
     return dynamodb_config
 
 
+def generate_cloudwatch_config() -> Dict[str, Any]:
+    """
+    Generate AWS CloudWatch configuration for MCP server monitoring.
+    
+    Returns:
+        CloudWatch configuration dictionary
+    """
+    print("\n=== AWS CloudWatch Configuration ===")
+    
+    # Sample CloudWatch configuration
+    cloudwatch_config = {
+        "LogGroups": [
+            {
+                "LogGroupName": "/aws/lambda/mcp-server",
+                "RetentionInDays": LOG_RETENTION_DAYS
+            },
+            {
+                "LogGroupName": "/aws/lambda/mcp-websocket-connect",
+                "RetentionInDays": LOG_RETENTION_DAYS
+            },
+            {
+                "LogGroupName": "/aws/lambda/mcp-websocket-disconnect",
+                "RetentionInDays": LOG_RETENTION_DAYS
+            },
+            {
+                "LogGroupName": "/aws/lambda/mcp-websocket-function-stream",
+                "RetentionInDays": LOG_RETENTION_DAYS
+            },
+            {
+                "LogGroupName": "/aws/lambda/mcp-websocket-tool-stream",
+                "RetentionInDays": LOG_RETENTION_DAYS
+            }
+        ],
+        "Alarms": [
+            {
+                "AlarmName": "mcp-server-errors",
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": "mcp-server"
+                    }
+                ],
+                "Period": 300,
+                "EvaluationPeriods": 1,
+                "Threshold": 5,
+                "ComparisonOperator": "GreaterThanThreshold"
+            },
+            {
+                "AlarmName": "mcp-server-throttles",
+                "MetricName": "Throttles",
+                "Namespace": "AWS/Lambda",
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": "mcp-server"
+                    }
+                ],
+                "Period": 300,
+                "EvaluationPeriods": 1,
+                "Threshold": 5,
+                "ComparisonOperator": "GreaterThanThreshold"
+            }
+        ],
+        "Dashboards": [
+            {
+                "DashboardName": "MCP-Server-Dashboard",
+                "Widgets": [
+                    "Lambda Invocations",
+                    "Lambda Errors",
+                    "Lambda Duration",
+                    "API Gateway Requests",
+                    "API Gateway Latency",
+                    "DynamoDB Read Capacity",
+                    "DynamoDB Write Capacity"
+                ]
+            }
+        ]
+    }
+    
+    print(json.dumps(cloudwatch_config, indent=2))
+    return cloudwatch_config
+
+
 def generate_deployment_steps() -> List[str]:
     """
     Generate a list of deployment steps for MCP server on AWS.
